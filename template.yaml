@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: AI Photo Album - Assignment 3
 
 Parameters:
@@ -12,7 +12,6 @@ Parameters:
     Description: S3 bucket name for photo storage
 
 Resources:
-
   # ----- S3 Buckets -----
 
   FrontendBucket:
@@ -32,13 +31,13 @@ Resources:
     Properties:
       Bucket: !Ref FrontendBucket
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Sid: PublicReadGetObject
             Effect: Allow
-            Principal: '*'
+            Principal: "*"
             Action: s3:GetObject
-            Resource: !Sub 'arn:aws:s3:::${FrontendBucketName}/*'
+            Resource: !Sub "arn:aws:s3:::${FrontendBucketName}/*"
 
   PhotosBucket:
     Type: AWS::S3::Bucket
@@ -52,7 +51,7 @@ Resources:
     Properties:
       RoleName: photo-album-lambda-role-cf
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -65,32 +64,32 @@ Resources:
       Policies:
         - PolicyName: OpenSearchAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
-                Action: 'es:ESHttp*'
-                Resource: '*'
+                Action: "es:ESHttp*"
+                Resource: "*"
         - PolicyName: LexAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
-                Action: 'lex:RecognizeText'
-                Resource: '*'
+                Action: "lex:RecognizeText"
+                Resource: "*"
         - PolicyName: S3PutAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
-                Action: 's3:PutObject'
-                Resource: !Sub 'arn:aws:s3:::${PhotosBucketName}/*'
+                Action: "s3:PutObject"
+                Resource: !Sub "arn:aws:s3:::${PhotosBucketName}/*"
 
   # ----- Lambda Functions -----
 
   IndexPhotosFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: index-photos
+      FunctionName: index-photos-cf
       Runtime: python3.9
       Handler: lambda_function.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -106,7 +105,7 @@ Resources:
   SearchPhotosFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: search-photos
+      FunctionName: search-photos-cf
       Runtime: python3.9
       Handler: lambda_function.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -171,13 +170,13 @@ Resources:
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         IntegrationResponses:
-          - StatusCode: '200'
+          - StatusCode: "200"
             ResponseParameters:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Api-Key'"
               method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
       MethodResponses:
-        - StatusCode: '200'
+        - StatusCode: "200"
           ResponseParameters:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
@@ -195,7 +194,7 @@ Resources:
     Properties:
       RestApiId: !Ref PhotoAlbumApi
       ParentId: !Ref PhotosResource
-      PathPart: '{filename}'
+      PathPart: "{filename}"
 
   PhotosPutMethod:
     Type: AWS::ApiGateway::Method
@@ -212,16 +211,16 @@ Resources:
         Type: AWS
         IntegrationHttpMethod: PUT
         Credentials: !GetAtt ApiGatewayS3Role.Arn
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:s3:path/${PhotosBucketName}/{filename}'
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:s3:path/${PhotosBucketName}/{filename}"
         RequestParameters:
           integration.request.path.filename: method.request.path.filename
           integration.request.header.x-amz-meta-customLabels: method.request.header.x-amz-meta-customLabels
         IntegrationResponses:
-          - StatusCode: '200'
+          - StatusCode: "200"
             ResponseParameters:
               method.response.header.Access-Control-Allow-Origin: "'*'"
       MethodResponses:
-        - StatusCode: '200'
+        - StatusCode: "200"
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
 
@@ -237,13 +236,13 @@ Resources:
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         IntegrationResponses:
-          - StatusCode: '200'
+          - StatusCode: "200"
             ResponseParameters:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Api-Key,x-amz-meta-customLabels'"
               method.response.header.Access-Control-Allow-Methods: "'PUT,OPTIONS'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
       MethodResponses:
-        - StatusCode: '200'
+        - StatusCode: "200"
           ResponseParameters:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
@@ -253,7 +252,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -262,11 +261,11 @@ Resources:
       Policies:
         - PolicyName: S3PutObjectPolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action: s3:PutObject
-                Resource: !Sub 'arn:aws:s3:::${PhotosBucketName}/*'
+                Resource: !Sub "arn:aws:s3:::${PhotosBucketName}/*"
 
   SearchLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -274,7 +273,7 @@ Resources:
       FunctionName: !Ref SearchPhotosFunction
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*'
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*"
 
   ApiDeployment:
     Type: AWS::ApiGateway::Deployment
@@ -325,10 +324,10 @@ Resources:
 Outputs:
   FrontendURL:
     Description: Public website URL for the frontend
-    Value: !Sub 'http://${FrontendBucketName}.s3-website-${AWS::Region}.amazonaws.com'
+    Value: !Sub "http://${FrontendBucketName}.s3-website-${AWS::Region}.amazonaws.com"
   ApiEndpoint:
     Description: API Gateway endpoint URL
-    Value: !Sub 'https://${PhotoAlbumApi}.execute-api.${AWS::Region}.amazonaws.com/v1'
+    Value: !Sub "https://${PhotoAlbumApi}.execute-api.${AWS::Region}.amazonaws.com/v1"
   ApiKeyId:
     Description: API Key ID (get value from console)
     Value: !Ref ApiKey
