@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+  pre_build:
+    commands:
+      - echo "Installing dependencies for index-photos..."
+      - cd index-photos
+      - pip install -r requirements.txt -t ./package
+      - cd package && zip -r ../deployment-package.zip . && cd ..
+      - zip deployment-package.zip lambda_function.py
+      - cd ..
+
+      - echo "Installing dependencies for search-photos..."
+      - cd search-photos
+      - pip install -r requirements.txt -t ./package
+      - cd package && zip -r ../deployment-package.zip . && cd ..
+      - zip deployment-package.zip lambda_function.py
+      - cd ..
+  build:
+    commands:
+      - echo "Deploying index-photos Lambda..."
+      - aws lambda update-function-code --function-name index-photos --zip-file fileb://index-photos/deployment-package.zip --region us-east-1
+      - echo "Deploying search-photos Lambda..."
+      - aws lambda update-function-code --function-name search-photos --zip-file fileb://search-photos/deployment-package.zip --region us-east-1
