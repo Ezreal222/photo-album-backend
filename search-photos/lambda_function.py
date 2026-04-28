@@ -1,4 +1,4 @@
-# Test demo for auto codepipeline
+# update for demo of codepipeline
 
 import json
 import boto3
